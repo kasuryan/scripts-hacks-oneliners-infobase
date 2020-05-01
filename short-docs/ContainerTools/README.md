@@ -11,7 +11,7 @@
 Lets begin with a context to put the tools in perspective.
 
 # Basic Docker workflow
-![DockerSimple](docs/DockerSimple.png)
+![DockerSimple](images/DockerSimple.png)
 1. Docker daemon does all things for you.
     * Pull and push images from an image registry
     * Make copies of images in a local container storage and to add layers to
@@ -26,7 +26,7 @@ Lets begin with a context to put the tools in perspective.
     * If a failure occurred, then there were orphaned processes.
     * Building containers led to security vulnerabilities.
 # Podman workflow
-![PodmanSimple](docs/PodmanSimple.png)
+![PodmanSimple](images/PodmanSimple.png)
 3. Podman addresses some of the issues with Docker.
    * The Podman approach is simply to directly interact with the image registry,
    with the container and image storage, and with the Linux kernel through the
@@ -42,7 +42,7 @@ Lets begin with a context to put the tools in perspective.
    * Podman’s local repository is in /var/lib/containers
 
 # Basic workflow in our environments.
-![BlockDiagram](docs/BlockDiagram.png)
+![BlockDiagram](images/BlockDiagram.png)
 
 5. Notes on satellite hosted Docker repo.
    * Allows import of images from external repositories.
