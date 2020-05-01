@@ -1,0 +1,14 @@
+yum install httpd-tools-2.4.6-88.el7.centos.x86_64 httpd-2.4.6-88.el7.centos.x86_64
+
+systemctl enable httpd
+
+Random password generation.
+      openssl rand -base64 32
+
+use that password in the setting up basic authentication on webserver.
+      htpasswd -c /etc/httpd/conf/kibana.htpasswd kibana
+
+firewall-cmd --add-service=http
+firewall-cmd --runtime-to-permanent
+
+/usr/sbin/setsebool -P httpd_can_network_connect 1

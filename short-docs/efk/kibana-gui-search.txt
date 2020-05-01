@@ -1,0 +1,31 @@
+ALl control node search
+    +hostname: ("ind-ctl01" OR "ind-ctl02" OR "ind-ctl03")
+
+    -hostname: ("ind-ctl01" OR "ind-ctl02" OR "ind-ctl03") # Negative search
+
+    hostname:("ind-ctl01.mgmt.cloud.example.com" "ind-ctl02.mgmt.cloud.example.com" "ind-ctl03.mgmt.cloud.example.com")
+
+    hostname:("ind-ctl01.mgmt.cloud.example.com" "ind-ctl02.mgmt.cloud.example.com" "ind-ctl03.mgmt.cloud.example.com") AND loglevel:error
+
+    -hostname: ("mum-ctl01" OR "mum-ctl02" OR "mum-ctl03" or "mum\-ceph" or  "mum\-ceph[0-9][0-9[0-9]\-")
+
+
+All ceph node search
+
+    +hostname: ("ind\-ceph")
+
+    Negative search i.e. not including these.
+
+    -hostname: ("ind\-ceph")
+
+Exclude hostnames with ctl or ceph nodes.
+
+    -hostname: ("ind-ctl01" OR "ind-ctl02" OR "ind-ctl03" OR "ind\-ceph")
+
+Error loglines on compute. Use negate all else on hostname to get compute nodes.
+
+    -hostname: ("ind-ctl01" OR "ind-ctl02" OR "ind-ctl03" OR "ind\-ceph") AND loglevel: ("ERR" OR "ERROR")
+
+Ceph:
+
+      +hostname: ("ind\-ceph") AND +message: WRN

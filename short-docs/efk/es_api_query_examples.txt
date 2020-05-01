@@ -1,0 +1,13 @@
+GET _cluster/health
+
+GET _cluster/state
+
+GET /_cluster/pending_tasks
+
+GET /_cluster/settings?include_defaults=true
+
+GET /_nodes/stats
+
+GET /_cat/count?v
+
+GET /_cat/allocation?v

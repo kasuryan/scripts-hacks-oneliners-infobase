@@ -90,3 +90,18 @@ REQUEST_SLOW 218 slow requests are blocked > 32 sec. Implicated osds 587
 ```
 # watch -n 1 "rbd -p glance-hc ls -l | grep 39048d2b-23cd-40eb-85bd-ac7da1206c04"
 ```
+## Scenario , a custom ceph pool (from SSD tier) backend for some KVM instances.
+```
+# ceph osd pool create libvirt-pool-ssd 128 replicated ssd-rule
+# rbd pool init libvirt-pool-ssd
+
+Assign appropriate authorization
+# ceph auth get-or-create client.libvirt mon 'allow r' osd 'allow rwx pool=libvirt-pool-ssd, allow rwx pool=backup' -o /etc/ceph/ceph.client.libvirt.keyring
+
+Back to the KVM instance, create a image file as below.
+rbd create --pool libvirt-pool-ssd --image atl1-efk01-image -s 20G
+
+Validate your creation with below
+# rbd -n client.libvirt -p libvirt-pool-ssd ls
+# rbd -n client.libvirt info libvirt-pool-ssd/atl1-efk01-image
+```

@@ -46,3 +46,7 @@
   ```
   ansible -i inv -m shell -a "stress-ng --cpu 0 --cpu-method all -t 1h; stress-ng --vm 8 --vm-bytes 80% -t 1h" rack1 -f 20
   ```
+  * Using a BASH variable with ansible.
+  ```
+  # cat /tmp/kart | while read snap vol; do ansible -i hosts cinder01 -s -m shell -a "rbd -n client.cinder snap ls -p volumes-sata volume-$vol | grep $snap"; done
+  ```
