@@ -1,0 +1,10 @@
+runc example:
+
+podman export $(podman create ubuntu:18.04) > ubuntu.tar
+mkdir -p ubuntu-runc/rootfs
+tar -C ubuntu-runc/rootfs -xf ubuntu.tar
+runc spec -b ubuntu-runc   # Creates a config.json for runc in the directory
+Edit the config.json and make sure key-value pair is as below for terminal
+"terminal": false
+runc create -b ubuntu-runc/ ubuntu-container
+runc start ubuntu-container
