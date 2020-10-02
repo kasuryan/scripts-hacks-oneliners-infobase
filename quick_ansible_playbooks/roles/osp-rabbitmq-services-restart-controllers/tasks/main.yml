@@ -1,0 +1,103 @@
+---
+- name:  All openstack api service restarts excluding barbican service
+  shell: |
+    docker restart $(docker ps | grep -F 'api' | grep -Fv 'barbican'| cut -d ' ' -f1)
+  when: not barbican|bool
+  tags:
+    os_service_api_restart
+
+- name:  All openstack api service restarts including barbican
+  shell: |
+    docker restart $(docker ps | grep -F 'api' | cut -d ' ' -f1)
+  when: barbican|bool
+  tags:
+    os_service_api_restart
+
+- name: Sleep for 5 seconds.
+  wait_for:
+    timeout: 5
+  tags:
+  - os_service_api_restart
+
+- name: Verify all api service containers are up, excluding barbican
+  shell: |
+    test $(docker ps | grep -F 'api' | grep -Fv 'barbican' | wc -l) -eq 16 -o \
+    $(docker ps | grep -F 'api' | grep -Fv 'barbican' | wc -l) -eq 17
+  when: not barbican|bool
+  register: result
+  failed_when: result.rc != 0
+  tags:
+  - is_os_api_up
+
+- name: Verify all api service containers are up, including barbican
+  shell: |
+    test $(docker ps | grep -F 'api' | wc -l) -eq 17 -o \
+    $(docker ps | grep -F 'api' | wc -l) -eq 18
+  when: barbican|bool
+  register: result
+  failed_when: result.rc != 0
+  tags:
+  - is_os_api_up
+
+- name: Nova & Cinder Scheduler restarts.
+  shell: |
+    docker restart $(docker ps | grep _scheduler | cut -d " " -f1)
+  tags:
+  - nova_cinder_sched_restart
+
+- name: Sleep for 5 seconds.
+  run_once: true
+  wait_for:
+    timeout: 5
+  tags:
+  - nova_cinder_sched_restart
+
+- name: Verify nova & cinder scheduler containers are up
+  shell: |
+    test $(docker ps | grep _scheduler | wc -l) -eq 2
+  register: result
+  failed_when: result.rc != 0
+  tags:
+  - is_scheduler_up
+
+- name: Nova conductor restarts
+  shell: |
+    docker restart $(docker ps | grep _conductor | cut -d " " -f1)
+  tags:
+  - nova_conductor_restart
+
+- name: Sleep for 5 seconds.
+  run_once: true
+  wait_for:
+    timeout: 5
+  tags:
+  - nova_conductor_restart
+
+- name: Verify nova conductor service
+  shell: |
+    test $(docker ps | grep _scheduler | cut -d ' ' -f1 | wc -l) -eq 2
+  register: result
+  failed_when: result.rc != 0
+  tags:
+  - is_conductor_up
+
+- name: Ceilometer & Gnocchi restarts
+  shell: |
+    docker restart $(docker ps | grep -E "ceilometer|gnocchi" | cut -d " " -f1)
+  tags:
+  - ceilo_gnocchi_restart
+
+- name: Sleep for 5 seconds.
+  run_once: true
+  wait_for:
+    timeout: 5
+  tags:
+  - ceilo_gnocchi_restart
+
+- name: Verify ceilometer & gnocchi service
+  shell: |
+    test $(docker ps |grep -E "ceilometer|gnocchi" | wc -l) -eq 5
+  register: result
+  failed_when: result.rc != 0
+  tags:
+  - is_ceilo_gnocchi_up

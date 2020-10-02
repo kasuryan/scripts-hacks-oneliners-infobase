@@ -1,0 +1,43 @@
+---
+- hosts: computes
+  gather_facts: False
+  serial: 1
+  user: heat-admin
+  become: yes
+  vars:
+    vgname: "rhelvg"
+    lvname: "lv_instance_base"
+    mountpt: "/var/lib/nova/instances/_base"
+
+  tasks:
+    - name: Stop nova_compute service
+      shell: |
+        docker stop nova_compute
+
+    - name: Unmount logical volume
+      mount:
+        path: "{{ mountpt }}"
+        state: unmounted
+
+
+    - name: sleep for 1 second and continue
+      wait_for:
+        timeout: 1
+      delegate_to: localhost
+
+    - name: Remove logical volume
+      lvol:
+        vg: "{{ vgname }}"
+        lv: "{{ lvname }}"
+        state: absent
+        force: yes
+
+    - name: Remove LV entry from fstab
+      lineinfile:
+        path: /etc/fstab
+        state: absent
+        regexp: '^.*lv_instance_base.*$' 
+
+    - name: Start nova_compute service
+      shell: |
+        docker start nova_compute

@@ -1,0 +1,21 @@
+- hosts: controllers
+  gather_facts: no
+  tasks:
+  - import_role:
+      name: osp-rabbitmq-services-restart-pcs
+
+- hosts: controllers
+  gather_facts: no
+  serial: 1
+  vars:
+    barbican: false
+  tasks:
+  - import_role:
+      name: osp-rabbitmq-services-restart-controllers
+
+- hosts: computes
+  gather_facts: no
+  serial: 1
+  tasks:
+  - import_role:
+      name: osp-rabbitmq-services-restart-computes

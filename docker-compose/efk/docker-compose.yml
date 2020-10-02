@@ -1,0 +1,48 @@
+## A docker-compose config files for running a containerized EFK stack
+version: '3'
+services:
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:6.4.0
+    container_name: elasticsearch
+    environment:
+       - discovery.type=single-node 
+       - bootstrap.memory_lock=true
+       - "ES_JAVA_OPTS=-Xms48g -Xmx48g"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nproc: 65535
+      nofile:
+        soft: 65535
+        hard: 65535
+    volumes:
+      - /esdata:/usr/share/elasticsearch/data/
+      - /etc/elasticsearch/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml
+    ports:
+      - 9200:9200
+      - 9300:9300
+
+  fluentd:
+    #image: fluent/fluentd:v1.2.5-onbuild 
+    image: fluentd_latest
+    volumes:
+      - /etc/fluentd/:/fluentd/etc
+      - /var/log/containers/fluentd/:/logs
+    ulimits:
+      nproc: 65535
+      nofile:
+        soft: 65535
+        hard: 65535
+    ports:
+      - 8080:8080
+      - 24224:24224
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:6.4.0
+    environment:
+      ELASTICSEARCH_URL: http://elasticsearch:9200 
+    volumes:
+       - /etc/kibana/kibana.yml:/usr/share/kibana/config/kibana.yml
+    ports:
+      - 5601:5601

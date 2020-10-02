@@ -1,0 +1,36 @@
+---
+- name: Services restart on computes
+  shell: |
+    docker restart $(docker ps | grep -E "nova_compute|ceilometer_agent_compute" | cut -d " " -f1)
+  tags:
+  - nova_compute_restart
+
+- name: Process & Container exporter restart
+  shell: |
+    systemctl restart process-exporter.service && systemctl restart container-exporter.service
+  tags:
+  - compute_exporter_restart
+
+- name: Sleep for 5 seconds.
+  run_once: true
+  wait_for:
+    timeout: 5
+  tags:
+  - nova_compute_restart
+  - compute_exporter_restart
+
+- name: Verify nova_compute services are up
+  shell: |
+    test $(docker ps | egrep "nova_compute|ceilometer_agent" | wc -l) -eq 2
+  register: result
+  failed_when: result.rc != 0
+  tags:
+  - are_compute_services_up
+
+- name: Check process & container exporters are running
+  shell: |
+    test $(systemctl -a | egrep "process-exporter|container-exporter" | awk '/running/ {count++} END {print count}') -eq 2
+  register: result
+  failed_when: result.rc != 0
+  tags:
+  - are_exporters_up

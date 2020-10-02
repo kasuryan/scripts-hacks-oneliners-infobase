@@ -1,0 +1,11 @@
+/var/log/yum.log {
+    rotate 7
+    compress
+    delaycompress
+    dateext
+    missingok
+    notifempty
+    maxsize 30k
+    yearly
+    create 0600 root root
+}

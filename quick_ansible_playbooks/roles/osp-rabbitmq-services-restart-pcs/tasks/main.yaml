@@ -1,0 +1,55 @@
+---
+- name: PCS resource restart rabbitmq-bundle
+  run_once: true
+  shell: pcs resource restart rabbitmq-bundle
+  tags:
+  - restart_rabbit
+
+- name: Sleep for 90 seconds.
+  run_once: true
+  wait_for:
+    timeout: 90
+  tags:
+  - restart_rabbit
+
+- name: Check pcs status to see of rabbitmq services are all back up.
+  run_once: true
+  shell: |
+    test "$(pcs status | grep rabbitmq-cluster | awk '/Started/ {count++} END {print count}')" -eq "3"
+  register: result
+  failed_when: result.rc != 0
+  tags:
+  - is_rabbit_up
+
+- name: check for rabbitmq network partitions
+  run_once: true
+  shell: |
+    test $(docker exec -i rabbitmq-bundle-docker-0 rabbitmqctl cluster_status | grep "partitions,\[\]")
+  register: result
+  failed_when: result.rc != 0
+  tags:
+  - rabbit_partition_check
+
+- name: PCS resource restart cinder-volume & cinder-backup
+  run_once: true
+  shell: |
+    pcs resource restart openstack-cinder-volume && sleep 2 \
+    && pcs resource restart openstack-cinder-backup
+  tags:
+    - cinder_services_restart
+
+- name: Sleep for 5 seconds.
+  run_once: true
+  wait_for:
+    timeout: 5
+  tags:
+  - cinder_services_restart
+
+- name: check cinder-volume and cinder-backup services are up.
+  run_once: true
+  shell: |
+    test $(pcs status | grep cinder | awk '/Started/ {count++} END {print count}') -eq 2
+  register: result
+  failed_when: result.rc != 0
+  tags:
+    - is_cinder_up

@@ -58,6 +58,102 @@ min_size: 2
 # ceph osd pool ls
 ```
 
+* If you wish to find config applied to individual pools. 
+```
+# ceph osd dump | grep pool
+pool 1 'prod-metrics-ssd' replicated size 3 min_size 2 crush_rule 2 object_hash rjenkins pg_num 2048 pgp_num 2048 last_change 560437 flags hashpspool stripe_width 0 application rbd
+pool 2 'prod-cinder-ssd' replicated size 3 min_size 2 crush_rule 2 object_hash rjenkins pg_num 4096 pgp_num 4096 last_change 589030 flags hashpspool stripe_width 0 application rbd
+pool 3 'prod-nova-hc' replicated size 3 min_size 2 crush_rule 1 object_hash rjenkins pg_num 1024 pgp_num 1024 last_change 616546 flags hashpspool stripe_width 0 application rbd
+pool 4 'prod-glance-hc' replicated size 3 min_size 2 crush_rule 1 object_hash rjenkins pg_num 1024 pgp_num 1024 last_change 616551 flags hashpspool stripe_width 0 application rbd
+pool 5 'prod-cinder-hc' replicated size 3 min_size 2 crush_rule 1 object_hash rjenkins pg_num 4096 pgp_num 4096 last_change 616233 flags hashpspool stripe_width 0 application rbd
+pool 6 'backup' replicated size 3 min_size 2 crush_rule 1 object_hash rjenkins pg_num 128 pgp_num 128 last_change 610506 flags hashpspool stripe_width 0 application rbd
+pool 7 'defaults.rgw.buckets.data' replicated size 3 min_size 2 crush_rule 1 object_hash rjenkins pg_num 256 pgp_num 256 last_change 563695 flags hashpspool stripe_width 0
+pool 8 'defaults.rgw.buckets.index' replicated size 3 min_size 2 crush_rule 2 object_hash rjenkins pg_num 128 pgp_num 128 last_change 563694 flags hashpspool stripe_width 0
+pool 9 '.rgw.root' replicated size 3 min_size 2 crush_rule 1 object_hash rjenkins pg_num 8 pgp_num 8 last_change 563684 flags hashpspool stripe_width 0 application rgw
+pool 10 'default.rgw.control' replicated size 3 min_size 2 crush_rule 1 object_hash rjenkins pg_num 8 pgp_num 8 last_change 563675 flags hashpspool stripe_width 0 application rgw
+pool 11 'default.rgw.meta' replicated size 3 min_size 2 crush_rule 1 object_hash rjenkins pg_num 8 pgp_num 8 last_change 563676 flags hashpspool stripe_width 0 application rgw
+pool 12 'default.rgw.log' replicated size 3 min_size 2 crush_rule 1 object_hash rjenkins pg_num 8 pgp_num 8 last_change 563677 flags hashpspool stripe_width 0 application rgw
+pool 13 'default.rgw.buckets.index' replicated size 3 min_size 2 crush_rule 2 object_hash rjenkins pg_num 8 pgp_num 8 last_change 563699 flags hashpspool stripe_width 0 application rgw
+pool 14 'default.rgw.buckets.data' replicated size 3 min_size 2 crush_rule 1 object_hash rjenkins pg_num 8 pgp_num 8 last_change 563696 flags hashpspool stripe_width 0 application rgw
+pool 16 'stg-cinder-ssd' replicated size 3 min_size 2 crush_rule 2 object_hash rjenkins pg_num 128 pgp_num 128 last_change 593522 flags hashpspool stripe_width 0 application rbd
+```
+
+* Look at the crush map rules that decide the placement of objects.
+```
+# ceph osd crush rule dump
+[
+    {
+        "rule_id": 0,
+        "rule_name": "replicated_rule",
+        "ruleset": 0,
+        "type": 1,
+        "min_size": 1,
+        "max_size": 10,
+        "steps": [
+            {
+                "op": "take",
+                "item": -1,
+                "item_name": "default"
+            },
+            {
+                "op": "chooseleaf_firstn",
+                "num": 0,
+                "type": "host"
+            },
+            {
+                "op": "emit"
+            }
+        ]
+    },
+    {
+        "rule_id": 1,
+        "rule_name": "hdd-rule",
+        "ruleset": 1,
+        "type": 1,
+        "min_size": 1,
+        "max_size": 10,
+        "steps": [
+            {
+                "op": "take",
+                "item": -27,
+                "item_name": "default~hdd"
+            },
+            {
+                "op": "chooseleaf_firstn",
+                "num": 0,
+                "type": "rack"
+            },
+            {
+                "op": "emit"
+            }
+        ]
+    },
+    {
+        "rule_id": 2,
+        "rule_name": "ssd-rule",
+        "ruleset": 2,
+        "type": 1,
+        "min_size": 1,
+        "max_size": 10,
+        "steps": [
+            {
+                "op": "take",
+                "item": -2,
+                "item_name": "default~ssd"
+            },
+            {
+                "op": "chooseleaf_firstn",
+                "num": 0,
+                "type": "rack"
+            },
+            {
+                "op": "emit"
+            }
+        ]
+    }
+]
+```
+
 * tells you on which host and which disk is the OSD service running.
 ```# ceph osd metadata osd.<num>
 ```

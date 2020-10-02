@@ -1,0 +1,53 @@
+# Playbook that rolls out logrotate config changes. 
+---
+- hosts: all 
+  vars:
+    file_vars:
+      - { name: bootlog }
+      - { name: syslog }
+      - { name: yum }
+      - { name: subscription-manager }
+  become: yes
+
+  tasks:
+  - debug: msg="Host is {{ ansible_fqdn }}"
+
+  - name: Create Backup dir for logrotate.d config
+    file:
+      path: "/var/tmp/logrotate.d_orig"
+      state: directory
+      recurse: yes
+    tags:
+       - backup
+
+  - name: Backup of logrotate.d config
+    copy: src=/etc/logrotate.d/{{ item.name }} dest=/var/tmp/logrotate.d_orig/{{ item.name }}_orig remote_src=yes
+    with_items: "{{ file_vars }}"
+    tags:
+       - backup
+
+  - name: Copy the template logrotate.d config
+    template:
+      src: template/{{ item.name }}.j2
+      dest: /etc/logrotate.d/{{ item.name }}
+      owner: root
+      group: root
+      mode: 0644
+    with_items: "{{ file_vars }}"
+
+  - name: Backup of logrotate config
+    copy: src=/etc/logrotate.conf dest=/var/tmp/logrotate.d_orig/logrotate.conf_orig remote_src=yes
+    tags:
+       - backup
+
+
+  - name: Copy the template logrotate config
+    template:
+      src: template/logrotate.conf.j2
+      dest: /etc/logrotate.conf
+      owner: root
+      group: root
+      mode: 0644
+
+  - name: Move logrotate cron job -- Daily to Hourly
+    command: mv /etc/cron.daily/logrotate /etc/cron.hourly/

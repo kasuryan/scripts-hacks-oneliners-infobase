@@ -1,0 +1,10 @@
+/var/log/rhsm/*.log {
+    rotate 7
+    compress
+    delaycompress
+    dateext
+    create 0600 root root
+    missingok
+    notifempty
+    sharedscripts
+}

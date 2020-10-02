@@ -1,0 +1,66 @@
+# Additional LV on IAD1 compute nodes to isolate staging area for image conversion
+## Objective
+## A dedicated partition on the disk for the staging area of non raw images on compute nodes will help to avoid filling up /var and disrupting compute node functions. This area is used to download non raw images when spinning up an instance off of a non raw image (example a qcow2). 
+## Change steps
+---
+- hosts: computes
+  gather_facts: False
+  serial: 1
+  user: heat-admin
+  become: yes
+  vars:
+    vgname: "rhelvg"
+    lvname: "lv_instance_base"
+    lvsize: "40g"
+    mountpt: "/var/lib/nova/instances/_base"
+    fs: xfs
+
+  tasks:
+    - name: creating new LVM logical volume
+      lvol:
+        vg: "{{ vgname }}"
+        lv: "{{ lvname }}"
+        size: "{{ lvsize }}"
+        state: present
+
+    - name: Create a "{{ fs }}" filesystem on lvm "/dev/mapper/{{ vgname }}-{{ lvname }}"
+      filesystem:
+        fstype: "{{ fs }}"
+        dev: "/dev/mapper/{{ vgname }}-{{ lvname }}"
+        force: no
+
+    - name: Stop nova_compute service and delete temporary files
+      shell: |
+        docker stop nova_compute && rm -f /var/lib/nova/instances/_base/* 
+
+    - name: sleep for 1 second and continue
+      wait_for:
+        timeout: 1
+      delegate_to: localhost
+
+    - name: mounting new filesystem
+      mount:
+        name: "{{ mountpt }}"
+        src: "/dev/{{ vgname }}/{{ lvname }}"
+        fstype: "{{ fs }}"
+        state: mounted
+        backup: yes
+        opts: rw,relatime,context="system_u:object_r:nova_var_lib_t:s0"
+        passno: 5
+
+    - name: sleep for 1 second and continue
+      wait_for:
+        timeout: 1
+      delegate_to: localhost
+
+    - name: Recursively change ownership of a directory
+      file:
+        path: "{{ mountpt }}"
+        state: directory
+        recurse: yes
+        owner: 42436
+        group: 42436
+
+    - name: Start nova_compute service
+      shell: |
+        docker start nova_compute

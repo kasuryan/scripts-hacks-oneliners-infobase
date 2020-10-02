@@ -5,6 +5,11 @@
   ```  
   # ansible -i inv prod -m shell -a  "hostname; pgrep td-agent-bit > /dev/null ; if [ \$? != 0 ]; then echo \"Starting service\"; systemctl start td-agent-bit; fi"
   ```
+  * Say you would like to override a variable that is a list of dictionaries on the fly with the ansible-playbook cli, here is how. I am overriding a file_vars which is of the type list and each element of that list is a map/dictionary (key: values). 
+  On top of that i am skipping some tasks using tags.
+  ```
+  ansible-playbook -i $inv logrotate.yml -e file_vars='[{"name":"syslog"}]' --skip-tags move_logrotate_cron -u root
+  ```
 
   * Example of a copy module use on the cli, could be applied on any other
   module too.
