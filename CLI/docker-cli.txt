@@ -1,0 +1,52 @@
+; Docker commands
+# check the catalog on a remote private registry. 
+  curl -k -v --noproxy 10.153.20.98 -X GET https://10.153.20.98:5000/v2/_catalog
+
+# Allows you  to pull docker containers from dockerhub
+
+# Pulling a specific version with the version tag under grafana
+ $sudo docker pull grafana/grafana:4.5.2
+
+# Trying to run 2 diff docker containers listening on the same container ports but listening on different host ports
+ $sudo docker run -d --name=grafana -p 3000:3000 grafana/grafana
+
+ $sudo docker run -d --name=grafana_452 -p 3010:3000 grafana/grafana:4.5.2
+
+ $ sudo docker ps -a
+    CONTAINER ID        IMAGE                   COMMAND                  CREATED             STATUS              PORTS                    NAMES
+    e5c966f2057d        influxdb                "/entrypoint.sh in..."   4 weeks ago         Up 4 weeks          0.0.0.0:8086->8086/tcp   affectionate_davinci
+    2ac15ed69c72        grafana/grafana:4.5.2   "/run.sh"                4 weeks ago         Up 4 weeks          0.0.0.0:3010->3000/tcp   grafana_452
+    e432d763d65a        grafana/grafana         "/run.sh"                4 weeks ago         Up 4 weeks          0.0.0.0:3000->3000/tcp   grafana
+
+# Docker image listing from local and external repo(i.e. Docker Hub)
+    $sudo docker image list
+    REPOSITORY                 TAG                 IMAGE ID            CREATED             SIZE
+    grafana/grafana            latest              4700307f41f2        6 weeks ago         238 MB
+    influxdb                   latest              14a9319c3ef0        7 weeks ago         205 MB
+    localhost:5000/my-ubuntu   latest              452a96d81c30        2 months ago        79.6 MB
+    grafana/grafana            4.5.2               1d2e2705fd26        9 months ago        303 MB
+
+# Pushing images committed locally to a private docker registry.
+# First commit the image locally. Then tag the image with the host name or IP address, and the port of the registry:
+# I have an local image fluentd_latest, I will have to tag it appropriately and then push it over to the remote registry.
+
+    docker tag fluentd_latest 10.153.20.98:5000/fluentd-latest
+    docker push 10.153.20.98:5000/fluentd-latest
+
+[root@asv-p-dtx-etl-02 ~]# docker inspect -f {{.GraphDriver.Data.DeviceName}} 19de0d06a506
+docker-253:2-269058711-b8cbe8b322e2d5fee4e082cfe1a92be758a47ba988bb18891a6645a2337840f4
+
+Making Changes to an imahge , commit and save it locally.
+
+docker commit -a "Kartik" -m "installed elasticsearch with proxy and cert set" efk_compose_fluentd_1 fluent_elastic
+
+
+EFK stack
+docker container logs 57daa45de143_efk_compose_fluentd_1
+docker restart 57daa45de143_efk_compose_fluentd_1
+docker exec -it 57daa45de143_efk_compose_fluentd_1 sh
+docker container logs 57daa45de143_efk_compose_fluentd_1 -f #follow logs from the beginning of log file.
+Logfile path  /var/lib/docker/containers
+
+Docker compose
+docker-compose up -d
