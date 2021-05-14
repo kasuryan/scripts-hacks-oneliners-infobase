@@ -7,7 +7,7 @@ mountpoint=$(buildah mount $container)
 
 wget -P ${mountpoint}/tmp https://github.com/Yelp/dumb-init/releases/download/v1.2.2/dumb-init_1.2.2_amd64.deb
 chroot ${mountpoint} bash -c "mkdir /usr/src/example"
-curl http://atl1-satellite.mgmt.example.cloud.ge.com/pulp/isos/example/Library/custom/automation/example-packages/example_automation-example-common-0.1.10.tar.gz \
+curl http://satellite.mgmt.example.cloud.example.com/pulp/isos/example/Library/custom/automation/example-packages/example_automation-example-common-0.1.10.tar.gz \
 | tar -xzC ${mountpoint}/usr/src/example
 
 buildah copy ${container} /usr/lib/python2.7/dist-packages/certifi/cacert.pem /usr/local/lib/python2.7/dist-packages/certifi/cacert.pem
