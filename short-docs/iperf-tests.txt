@@ -1,0 +1,49 @@
+iperf daemon running everywhere
+
+1 S         6 S          11 S
+2 S         7 S          12 S
+3 S         8 S          13 S
+4 S         9 S          14 S
+5 S         10 S         15 S
+
+Rack 1 server  Rack 2 Server Rack 3 Server
+Rack 1 to Rack 2 & 3, Rack 2 to Rack 1 & 3, Rack 3 to 1 & 2
+
+Open FW rules on the baremetal hosts to allow receive iperf traffic.
+
+$ inv=~/Alpharetta_deployment/configs/US-EAST2-16/ansible/inventory/overcloud
+$ ansible -i $inv computes -m shell -a 'hostname && iptables -I INPUT -p tcp -m multiport --dports 5201,5202 -m state --state NEW -m comment --comment "iperf ports open for testing" -j ACCEPT'
+
+Start the iperf servers listening on ports 5201(default) and 5202.
+$ ansible -i $inv ~"10.153.20.20[1-9]" -m shell -a "hostname && iperf3 -s --logfile /var/log/iperfs_${HOSTNAME}.log & > /dev/null  && iperf3 -s -p 5202 --logfile /var/log/iperfs1_${HOSTNAME}.log & > /dev/null"
+
+$ ansible -i $inv ~"10.153.20.21[0-5]" -m shell -a "hostname && iperf3 -s --logfile /var/log/iperfs_${HOSTNAME}.log & > /dev/null  && iperf3 -s -p 5202 --logfile /var/log/iperfs1_${HOSTNAME}.log & > /dev/null"
+
+
+$ ansible -i $inv computes -m shell -a "hostname && iperf3 -D -s --logfile /var/log/iperfs_${HOSTNAME}.log && iperf3 -D -s -p 5202 --logfile /var/log/iperfs1_${HOSTNAME}.log"
+while read r1 r2 r3; do echo $r1 $r2 $r3; done < rack123
+
+Start the clients first with bond_data interface
+
+Rack 1 clients hitting Rack2 and Rack 3 servers.
+while read r1 r2 r3; do ansible -i $inv ${r1} -B 1500 -P 0 -m shell -a "iperf3 -c ${r2} -p 5201 -t 1200 -i 60 --logfile /var/log/iperfc_\${HOSTNAME}.log"; ansible -i $inv ${r1} -B 1500 -P 0 -m shell -a "iperf3 -c ${r3} -p 5201 -t 1200 -i 60 --logfile /var/log/iperfc1_\${HOSTNAME}.log"; done < iperf/rack123
+
+Rack 2 clients hitting Rack1 and Rack 3 servers
+while read r1 r2 r3; do ansible -i $inv ${r2} -B 1500 -P 0 -m shell -a "iperf3 -c ${r1} -p 5201 -t 1200 -i 60 --logfile /var/log/iperfc_\${HOSTNAME}.log"; ansible -i $inv ${r2} -B 1500 -P 0 -m shell -a "iperf3 -c ${r3} -p 5202 -t 1200 -i 60 --logfile /var/log/iperfc1_\${HOSTNAME}.log"; done < iperf/rack123
+
+Rack 3 clients hitting Rack 1 and Rack 2 servers
+while read r1 r2 r3; do ansible -i $inv ${r3} -B 1500 -P 0 -m shell -a "iperf3 -c ${r1} -p 5202 -t 1200 -i 60 --logfile /var/log/iperfc_\${HOSTNAME}.log"; ansible -i $inv ${r3} -B 1500 -P 0 -m shell -a "iperf3 -c ${r2} -p 5202 -t 1200 -i 60 --logfile /var/log/iperfc1_\${HOSTNAME}.log"; done < iperf/rack123
+
+ansible -i $inv computes -m shell -a "tail -n 29 /var/log/iperfc*cmp*.log"
+
+
+Next start clients on the bond_tenant interface in a mesh.
+
+Rack 1 clients hitting Rack2 and Rack 3 servers.
+while read r1 r2 r3; do ansible -i $inv ${r1} -B 1500 -P 0 -m shell -a "iperf3 -c ${r2} -p 5201 -t 1200 -i 60 -M 8960 --logfile /var/log/iperfc_\${HOSTNAME}.log"; ansible -i $inv ${r1} -B 1500 -P 0 -m shell -a "iperf3 -c ${r3} -p 5201 -t 1200 -i 60 -M 8960 --logfile /var/log/iperfc1_\${HOSTNAME}.log"; done < iperf/rack123_bondtenant
+
+Rack 2 clients hitting Rack1 and Rack 3 servers
+while read r1 r2 r3; do ansible -i $inv ${r2} -B 1500 -P 0 -m shell -a "iperf3 -c ${r1} -p 5201 -t 1200 -i 60 -M 8960 --logfile /var/log/iperfc_\${HOSTNAME}.log"; ansible -i $inv ${r2} -B 1500 -P 0 -m shell -a "iperf3 -c ${r3} -p 5202 -t 1200 -i 60 -M 8960 --logfile /var/log/iperfc1_\${HOSTNAME}.log"; done < iperf/rack123_bondtenant
+
+Rack 3 clients hitting Rack 1 and Rack 2 servers
+while read r1 r2 r3; do ansible -i $inv ${r3} -B 1500 -P 0 -m shell -a "iperf3 -c ${r1} -p 5202 -t 1200 -i 60 -M 8960 --logfile /var/log/iperfc_\${HOSTNAME}.log"; ansible -i $inv ${r3} -B 1500 -P 0 -m shell -a "iperf3 -c ${r2} -p 5202 -t 1200 -i 60 -M 8960 --logfile /var/log/iperfc1_\${HOSTNAME}.log"; done < iperf/rack123_bondtenant
